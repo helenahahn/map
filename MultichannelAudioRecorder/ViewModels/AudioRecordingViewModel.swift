@@ -8,10 +8,12 @@
 import Foundation
 import AVFoundation
 import SwiftUI
-
-
+import Combine
 
 class AudioRecordingViewModel: ObservableObject {
+    
+    // MARK: - Services
+    private let fileService: AudioFileService
     
     // MARK: - @Published UI State
     
@@ -64,7 +66,7 @@ class AudioRecordingViewModel: ObservableObject {
     @Published var inputDeviceName: String = "Unknown Input"
     
     /// The `AVAudioEngine` used for complex audio processing, specifically for multichannel recording in this case.
-    private let audioEngine = AVAudioEngine()
+    private var audioEngine: AVAudioEngine!
     
     /// The file on disk that the audio engine writes to during a multichannel recording.
     private var audioFile: AVAudioFile?
@@ -74,6 +76,14 @@ class AudioRecordingViewModel: ObservableObject {
     
     /// The app's shared `AVAudioSEssion`, used to configure the app's audio behavior with the iOS system.
     private var recordingSession: AVAudioSession?
+    
+    ///
+    private var debugBufferCount = 0
+    
+    // MARK: - Combine
+    
+    /// Set to store Combine subscriptions
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Internal State
     
@@ -103,20 +113,45 @@ class AudioRecordingViewModel: ObservableObject {
     ///
     /// - Parameter isPreview: A Boolean that should be `true` only when the ViewModel is being used
     ///   in an Xcode Preview. Defaults to `false`.
-    init(isPreview: Bool = false) {
+    /// - Parameter fileService: Optional file service for dependency injection (mainly for testing)
+    init(isPreview: Bool = false, fileService: AudioFileService? = nil) {
         self.isPreview = isPreview
+        
+        // Use provided service or create a new one
+        if let providedService = fileService {
+            self.fileService = providedService
+        } else {
+            self.fileService = AudioFileService(isPreview: isPreview)
+        }
         
         if isPreview {
             print("DEBUG: Setting up preview data")
             self.hasPermission = true
             // Use the mock initializer or static mock data
             self.audioRecordings = AudioRecording.mockRecordings()
-            
         } else {
             print("DEBUG: ViewModel initialized for real device")
             self.hasPermission = false
             self.audioRecordings = []
         }
+        
+        setupBindings()
+    }
+    
+    /// Sets up Combine bindings between the file service and the ViewModel
+    private func setupBindings() {
+        // Bind file service's audioRecordings to our published property
+        fileService.$audioRecordings
+            .assign(to: \.audioRecordings, on: self)
+            .store(in: &cancellables)
+        
+        // When recording stops, refresh the file list
+        $isRecording
+            .filter { !$0 } // Only when recording stops (becomes false)
+            .sink { [weak self] _ in
+                self?.refreshAudioFiles()
+            }
+            .store(in: &cancellables)
     }
     
     /// Kicks off the main asynchronous setup tasks for the ViewModel.
@@ -227,7 +262,9 @@ class AudioRecordingViewModel: ObservableObject {
                 let session = AVAudioSession.sharedInstance()
 
                 // Set Category and Activate Session First
+               
                 try session.setCategory(.playAndRecord, mode: .measurement, options: [.allowBluetooth, .defaultToSpeaker])
+    
                 try session.setActive(true)
                 
                 // Find and Set the Preferred Input
@@ -241,9 +278,6 @@ class AudioRecordingViewModel: ObservableObject {
 
                 print("DEBUG: Found preferred input: \(preferredInput.portName) (Type: \(preferredInput.portType.rawValue))")
                 try session.setPreferredInput(preferredInput)
-
-                // Increased delay for stability
-                Thread.sleep(forTimeInterval: 0.5)
 
                 // Configure the number of channels on the *active* input
                 var desiredChannels = 1
@@ -262,8 +296,6 @@ class AudioRecordingViewModel: ObservableObject {
                 
                 try session.setPreferredInputNumberOfChannels(desiredChannels)
                 
-                // Allow another moment for the channel setting to apply
-                Thread.sleep(forTimeInterval: 0.1)
 
                 // Final Verification
                 print("DEBUG: Final configuration complete.")
@@ -397,78 +429,16 @@ class AudioRecordingViewModel: ObservableObject {
     }
     
     /// Scans the app's Documents directory for saved audio files and updates the `audioRecordings` array.
-    ///
-    /// This function ensures the user-facing list is always in sync with the files stored on disk. To prevent
-    /// freezing the UI, the file I/O operations are performed on a background thread. Once the files are found
-    /// and filtered (`.m4a` and `.caf`), the final update to the `@Published audioRecordings` array is dispatched
-    /// back to the main thread.
     func refreshAudioFiles() {
-        // Skip for previews since they use mock data
-        guard !isPreview else { return }
-        
-        // Move file operations to background thread
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                
-                let result = try FileManager.default.contentsOfDirectory(
-                    at: url,
-                    includingPropertiesForKeys: nil,
-                    options: .producesRelativePathURLs
-                )
-                print("DEBUG: Found \(result.count) files in documents directory")
-                
-                // Build new recordings array on background thread
-                var newRecordings: [AudioRecording] = []
-                
-                for fileURL in result {
-                    // Only add audio files
-                    if fileURL.pathExtension.lowercased() == "m4a" || fileURL.pathExtension.lowercased() == "caf"{
-                        let audioRecording = AudioRecording(url: fileURL)
-                        newRecordings.append(audioRecording)
-                    }
-                }
-                
-                // Update UI on main thread
-                DispatchQueue.main.async {
-                    // Clear the array first, then populate it (matching your original logic)
-                    self.audioRecordings.removeAll()
-                    self.audioRecordings.append(contentsOf: newRecordings)
-                    print("DEBUG: Total audio files: \(self.audioRecordings.count)")
-                }
-                
-            } catch {
-                print("DEBUG: Error reading directory: \(error.localizedDescription)")
-            }
-        }
+        fileService.refreshAudioFiles()
     }
     
     /// Deletes audio recordings from both the user interface and the device's file system.
-    ///
-    /// This function performs a two-step deletion to ensure the UI feels immediately responsive.
-    /// 1. The `AudioRecording` objects are instantly removed from the `@Published audioRecordings` array,
-    ///    which updates the SwiftUI `List`.
-    /// 2. The actual file deletion from the disk is then dispatched to a background thread to avoid
-    ///    freezing the UI.
-    ///
-    ///- Parameter offsets: An `IndexSet` provided by SwiftUI's `.onDelete` modifier, containing the positions of the rows to be deleted.
-    func delete(at offsets: IndexSet) {
-        let recordingsToDelete = offsets.map { (position) in
-            return self.audioRecordings[position]
-        }
-        
-        audioRecordings.remove(atOffsets: offsets)
-        
-        DispatchQueue.global(qos: .utility).async {
-            for recording in recordingsToDelete {
-                do {
-                    try FileManager.default.removeItem(at: recording.url)
-                } catch {
-                    print("Error deleting the file: \(error)")
-                }
-            }
-        }
-    }
+   ///
+   /// - Parameter offsets: An `IndexSet` provided by SwiftUI's `.onDelete` modifier
+   func delete(at offsets: IndexSet) {
+       fileService.delete(at: offsets)
+   }
     
     /// Configures and prepares the `AVAudioEngine` for multichannel recording.
     ///
@@ -524,15 +494,56 @@ class AudioRecordingViewModel: ObservableObject {
     ///     - buffer: An `AVAudioPCMBuffer` containing the latest chunck of raw audio samples from the input.
     ///     - time: The timestamp indicating when the buffer was captured. This is provided by the audio engine.
     private func processAudioBuffer(_ buffer: AVAudioPCMBuffer, at time: AVAudioTime) {
+        
+        #if DEBUG
+        // Debug every 50th buffer (about once per second)
+        debugBufferCount += 1
+        
+        if debugBufferCount % 50 == 0 {
+            debugChannelActivity(buffer)
+        }
+        #endif
+        
         // Write to file if recording
         if let audioFile = audioFile {
             do {
                 try audioFile.write(from: buffer)
             } catch {
-                print("Error writing audio buffer")
+                print("Error writing audio buffer: \(error)")
             }
         }
     }
+    
+    #if DEBUG
+    private func debugChannelActivity(_ buffer: AVAudioPCMBuffer) {
+        guard let channelData = buffer.floatChannelData else { return }
+        let channelCount = Int(buffer.format.channelCount)
+        
+        print("=== AUDIO DEBUG ===")
+        print("Format: \(buffer.format)")
+        print("Channels in buffer: \(channelCount)")
+        print("Frame length: \(buffer.frameLength)")
+        
+        for channel in 0..<channelCount {
+            let samples = channelData[channel]
+            var maxAmplitude: Float = 0
+            var activeFrames = 0
+            
+            // Check activity in this channel
+            for frame in 0..<Int(buffer.frameLength) {
+                let sample = abs(samples[frame])
+                maxAmplitude = max(maxAmplitude, sample)
+                if sample > 0.001 { // Threshold for "active" audio
+                    activeFrames += 1
+                }
+            }
+            
+            let activityPercent = (Float(activeFrames) / Float(buffer.frameLength)) * 100
+            print("Channel \(channel): Max=\(String(format: "%.4f", maxAmplitude)), Active=\(String(format: "%.1f", activityPercent))%")
+        }
+        print("==================")
+    }
+    #endif
     
     /// Starts the recording process.
     ///
@@ -607,6 +618,8 @@ class AudioRecordingViewModel: ObservableObject {
     private func startMultichannelRecording() {
         guard !isRecording else { return }
         
+        audioEngine = AVAudioEngine()
+        
         do {
             
             try setupAudioEngine()
@@ -617,16 +630,27 @@ class AudioRecordingViewModel: ObservableObject {
             let audioFilename = documentsPath.appendingPathComponent("Multichannel_Recording_\(dateFormatter.string(from: Date())).caf")
             
             let inputNode = audioEngine.inputNode
-            let recordingFormat = inputNode.outputFormat(forBus: 0)
-            
-            audioFile = try AVAudioFile(forWriting: audioFilename, settings: recordingFormat.settings)
+            let liveFormat = inputNode.outputFormat(forBus: 0)
+
+            // Explicitly define the file format settings for maximum compatibility.
+            let fileSettings: [String: Any] = [
+                AVFormatIDKey: kAudioFormatLinearPCM,
+                AVSampleRateKey: liveFormat.sampleRate,
+                AVNumberOfChannelsKey: liveFormat.channelCount,
+                AVLinearPCMBitDepthKey: 32,
+                AVLinearPCMIsFloatKey: true,
+                AVLinearPCMIsNonInterleaved: true
+            ]
+
+            // Create the audio file with our explicit, compatible settings.
+            audioFile = try AVAudioFile(forWriting: audioFilename, settings: fileSettings)
             
             DispatchQueue.main.async {
                 self.isRecording = true
             }
             
             print("DEBUG: Started multichannel recording to \(audioFilename)")
-            print("DEBUG: Recording with \(recordingFormat.channelCount) channels")
+//            print("DEBUG: Recording with \(recordingFormat.channelCount) channels")
             
         } catch {
             print("Could not start multichannel recording: \(error.localizedDescription)")
@@ -672,10 +696,24 @@ class AudioRecordingViewModel: ObservableObject {
     /// 1. Removes the tap from the input node, which stops the `processAudioBuffer` function from being called.
     /// 2. Stops the audio engine itself, stopping all audio processing.
     /// 3. Sets the `audioFile` property to `nil`, closing the reference to the file on disk and making it ready for playback.
+//    func stopMultiChannelRecording() {
+//        audioEngine.inputNode.removeTap(onBus: 0)
+//        audioEngine.stop()
+//        audioFile = nil
+//    }
     func stopMultiChannelRecording() {
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
+        // 1. Check if the engine exists and is running to prevent crashes.
+        if audioEngine != nil && audioEngine.isRunning {
+            // 2. Remove the tap and stop the engine.
+            audioEngine.inputNode.removeTap(onBus: 0)
+            audioEngine.stop()
+        }
+        
+        // 3. Finalize the audio file.
         audioFile = nil
+        
+        // 4. Release the engine instance to be created fresh next time.
+        audioEngine = nil
     }
     
     /// Checks whether the audio channel at a specific index is currently enabled.
@@ -725,8 +763,8 @@ class AudioRecordingViewModel: ObservableObject {
             if !enabledChannels[i] {
                 let channelPointer = channelData[i]
                 
-                for frame in 0..<Int(buffer.frameLength) {
-                    channelPointer[frame] = 0.0
+                for j in 0..<Int(buffer.frameLength) {
+                    channelPointer[j] = 0.0
                 }
             }
         }
