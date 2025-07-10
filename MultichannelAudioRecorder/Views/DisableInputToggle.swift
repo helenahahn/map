@@ -20,8 +20,18 @@ struct DisableInputToggle: View {
     var body: some View {
         
         Toggle(isOn: Binding(
-            get: { !viewModel.isMicEnabled(channelIndex) },
-            set: { newValue in viewModel.toggleMic(channelIndex) }
+            get: {
+                guard viewModel.enabledChannels.indices.contains(channelIndex) else {
+                    return false // If the house doesn't exist, just return a default value.
+                }
+                return !viewModel.isMicEnabled(channelIndex)
+            },
+            set: {_ in 
+                guard viewModel.enabledChannels.indices.contains(channelIndex) else {
+                    return
+                }
+                viewModel.toggleMic(channelIndex)
+            }
         ), label: {
             Text("Disable Microphone")
         })

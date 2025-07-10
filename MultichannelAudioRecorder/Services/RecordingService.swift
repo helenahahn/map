@@ -29,13 +29,20 @@ class RecordingService {
     /// to determine which audio channels to write to the file.
     private var enabledChannels: [Bool] = []
     
+    /// Stores the gain levels for each audio channel.
+    ///
+    /// This array is populated by the `startRecording` method and is used by `applyGainLevels`
+    /// to get the correct gain factor to apply to each channel's audio buffer.
+    private var channelGainLevels: [Float] = []
+    
     /// Starts the recording process.
     ///
     /// If the program is in multichannel recording mode, then it calls on `startMultichannelRecording()`.
     /// If the program is in single channel recording mode, then it calls on `startSingleChannelRecording()`.
-    func startRecording(isMultichannel: Bool, enabledChannels: [Bool]) {
+    func startRecording(isMultichannel: Bool, enabledChannels: [Bool], channelGainLevels: [Float]) {
         
         self.enabledChannels = enabledChannels
+        self.channelGainLevels = channelGainLevels
         
         if isMultichannel {
             print("multichannelmode on")
@@ -178,11 +185,12 @@ class RecordingService {
     
     /// Processes a single buffer of audio data from the engine's tap.
     ///
-    /// This function first mutes any disabled channels and then writes the resulting buffer
+    /// This function first mutes any disabled channels, applies adjusted gain levels, and then writes the resulting buffer
     /// to the audio file on disk.
     /// - Parameter buffer: The `AVAudioPCMBuffer` containing the latest chunk of raw audio samples.
     private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
         muteDisabledChannels(buffer) // Mute channels before writing
+        applyGainLevels(buffer)
         
         do {
             try audioFile?.write(from: buffer)
@@ -195,6 +203,7 @@ class RecordingService {
     ///
     /// This function iterates through the `enabledChannels` array and, for any channel marked as `false`,
     /// it overwrites that channel's audio samples in the provided buffer with zeros.
+    ///
     /// - Parameter buffer: The `AVAudioPCMBuffer` whose audio data will be directly modified.
     private func muteDisabledChannels(_ buffer: AVAudioPCMBuffer) {
         guard let channelData = buffer.floatChannelData else { return }
@@ -208,6 +217,32 @@ class RecordingService {
                 let channelPointer = channelData[i]
                 for j in 0..<Int(buffer.frameLength) {
                     channelPointer[j] = 0.0
+                }
+            }
+        }
+    }
+    
+    /// Applies the adjusted gain levels to each channel.
+    ///
+    /// This function iterates the `channelGainLevels` array and, for any channel that does not have
+    /// the default value of 1.0, it overwrites that channel's audio samples in the provided buffer with its
+    /// value multiplied by the appropriate new gain level.
+    ///
+    /// - Parameter buffer: The `AVAudioPCMBuffer` whose audio data will be directly modified.
+    private func applyGainLevels(_ buffer: AVAudioPCMBuffer) {
+        guard let channelData = buffer.floatChannelData else { return }
+        
+        let bufferChannels = Int(buffer.format.channelCount)
+        guard channelGainLevels.count == bufferChannels else { return }
+        
+        for i in 0..<bufferChannels {
+            if channelGainLevels[i] != 1.0 {
+                // Apply new gain level
+                let channelPointer = channelData[i]
+                let gain = channelGainLevels[i]
+                
+                for j in 0..<Int(buffer.frameLength) {
+                    channelPointer[j] = channelPointer[j] * gain
                 }
             }
         }

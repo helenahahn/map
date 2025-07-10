@@ -53,6 +53,7 @@ class AudioRecordingViewModel: ObservableObject {
     /// An array of Booleans to track which channel toggles are enabled in the UI.
     @Published var enabledChannels: [Bool] = []
     
+    /// An array that contains the gain levels for each active audio channel.
     @Published var channelGainLevels: [Float] = []
     
     /// The number of active input channels, mirrored from the `AudioSessionService`.
@@ -223,7 +224,7 @@ class AudioRecordingViewModel: ObservableObject {
     
     /// Tells the `RecordingService` to start a new recording.
     func startRecording() {
-        recordingService.startRecording(isMultichannel: self.isMultichannelMode, enabledChannels: self.enabledChannels)
+        recordingService.startRecording(isMultichannel: self.isMultichannelMode, enabledChannels: self.enabledChannels, channelGainLevels: self.channelGainLevels)
     }
     
     /// Tells the `RecordingService` to stop the current recording.
@@ -238,7 +239,11 @@ class AudioRecordingViewModel: ObservableObject {
     /// - Parameter index: The zero-based index of the channel to check.
     /// - Returns: `true` if the channel at the given index is enabled; otherwise, `false`.
     func isMicEnabled(_ index: Int) -> Bool {
-            return enabledChannels[index]
+        guard enabledChannels.indices.contains(index) else {
+            return true
+        }
+    
+        return enabledChannels[index]
     }
     
     /// Toggles the enabled state of the audio channel at a specific index.
@@ -247,7 +252,11 @@ class AudioRecordingViewModel: ObservableObject {
     ///
     /// - Parameter index: The zero-based index of the channel to toggle.
     func toggleMic(_ index: Int) {
-            enabledChannels[index].toggle()
+        guard enabledChannels.indices.contains(index) else {
+            return
+        }
+        
+        enabledChannels[index].toggle()
     }
     
 
