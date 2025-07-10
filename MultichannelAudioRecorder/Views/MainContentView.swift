@@ -22,7 +22,7 @@ struct MainContentView: View {
         // If there are no recordings, show the placeholder view.
         if recordings.isEmpty {
             NoItemView()
-                .offset(y: -40)
+       
         } else {
             // If recordings exist, display them in a list.
             List {

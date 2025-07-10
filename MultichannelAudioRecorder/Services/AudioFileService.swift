@@ -94,12 +94,10 @@ class AudioFileService: ObservableObject {
     ///    freezing the UI.
     ///
     ///- Parameter offsets: An `IndexSet` provided by SwiftUI's `.onDelete` modifier, containing the positions of the rows to be deleted.
-    func delete(at offsets: IndexSet) {
-        let recordingsToDelete = offsets.map { (position) in
-            return self.audioRecordings[position]
-        }
+    func delete(at offsets: IndexSet, from currentRecordings: [AudioRecording]) {
+        let recordingsToDelete = offsets.map { currentRecordings[$0] }
         
-        audioRecordings.remove(atOffsets: offsets)
+        self.audioRecordings.remove(atOffsets: offsets)
         
         DispatchQueue.global(qos: .utility).async {
             for recording in recordingsToDelete {

@@ -22,22 +22,22 @@ struct InputView: View {
     
     var body: some View {
         Form {
-            Section(header: Text("Available Inputs")) {
-                // Check if an external audio interface is likely connected.
-                if viewModel.availableInputNames.count > 1 {
-                    ForEach(0..<viewModel.channelNames.count, id: \.self) { index in
-                        NavigationLink(destination: InputSettingView(viewModel: viewModel, channelIndex: index)) {
-                            Text(viewModel.channelNames[index])
-                        }
-                    }
-                } else {
-                    // If no, show the name of the single available device.
-                    ForEach(viewModel.availableInputNames, id: \.self) { name in
-                        Text(name)
+            // Check if an external audio interface is likely connected.
+            if viewModel.availableInputNames.count > 1 {
+                ForEach(0..<viewModel.channelNames.count, id: \.self) { index in
+                    NavigationLink(destination: InputSettingView(viewModel: viewModel, channelIndex: index)) {
+                        Text(viewModel.channelNames[index])
                     }
                 }
+            } else {
+                // If no, show the name of the single available device.
+                ForEach(viewModel.availableInputNames, id: \.self) { name in
+                    Text(name)
+                }
             }
+            
         }
+        .navigationTitle("Available Inputs")
     }
 }
 

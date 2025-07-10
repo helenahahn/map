@@ -18,15 +18,20 @@ struct InputSettingView: View {
     
     var body: some View {
         Form {
-            Section(header: Text("Audio Settings")) {
+            Section(header: Text("Disable Microphone")) {
                 DisableInputToggle(viewModel: viewModel, channelIndex: channelIndex)
-                Text("Adjust Gain")
-                Text("Test Volume Levels")
+            }
+            
+            Section(header: Text("Adjust Gain")) {
+                GainSliderView(viewModel: viewModel, channelIndex: channelIndex)
             }
         }
+        .navigationTitle("Input Settings")
     }
 }
 
 #Preview {
-    InputSettingView(viewModel: AudioRecordingViewModel.configuredMockViewModel(), channelIndex: 2)
+    return NavigationStack {
+        InputSettingView(viewModel: AudioRecordingViewModel.configuredMockViewModel(), channelIndex: 0)
+    }
 }

@@ -19,19 +19,17 @@ struct ListView: View {
     @State private var audioRecorder: AVAudioRecorder?
     
     var body: some View {
-        ZStack {
+        VStack(spacing: 0) {
             // Main content area
             MainContentView(recordings: $viewModel.audioRecordings, viewModel: viewModel)
+                .frame(maxHeight: .infinity)
         
-            VStack {
-               Spacer()
-                // The main recording button and timer area, overlaid at the bottom of the screen.
-                RecordingButtonArea(
-                    isRecording: viewModel.isRecording,
-                    onStart: viewModel.startRecording,
-                    onStop: viewModel.stopRecording
-               )
-            }
+            // The main recording button and timer area, pinned to the bottome of the screen.
+            RecordingButtonArea(
+                isRecording: viewModel.isRecording,
+                onStart: viewModel.startRecording,
+                onStop: viewModel.stopRecording
+           )
         }
         .edgesIgnoringSafeArea(.bottom)
         .navigationTitle("All Recordings")

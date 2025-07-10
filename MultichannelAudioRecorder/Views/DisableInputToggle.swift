@@ -32,5 +32,5 @@ struct DisableInputToggle: View {
 }
 
 #Preview {
-    DisableInputToggle(viewModel: AudioRecordingViewModel.configuredMockViewModel(), channelIndex: 2)
+    DisableInputToggle(viewModel: AudioRecordingViewModel.configuredMockViewModel(), channelIndex: 0)
 }
