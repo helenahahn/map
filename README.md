@@ -1,7 +1,7 @@
 # **Multichannel Audio Recorder**
 This iOS application is an audio recorder built with SwiftUI. It supports both standard single-channel recording and advanced multi-channel recording from external audio interfaces.
 
-Features
+## Features
 • Single and Multi-channel Recording: Seamlessly switch between recording from the device's built-in microphone or capturing multiple channels simultaneously from a connected USB audio device.
 • File Management: Recordings are automatically saved and displayed in a list. Users can play back recordings and delete them with a simple swipe gesture.
 • Playback Controls: An integrated audio player allows users to play, pause, and resume their recordings directly within the app.
