@@ -56,6 +56,6 @@ The application is structured around a central AudioRecordingViewModel that coor
 
 ## Dependencies
 This project uses only native Apple frameworks:
-- SwiftUI: For the user interface.
+- SwiftUI: For the user interface.
 - AVFoundation: For all audio recording, playback, and session management.
 - Combine: For reactive programming and state maangement between the services and the ViewModel.
