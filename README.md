@@ -24,11 +24,22 @@ The application is structured around a central AudioRecordingViewModel that coor
 - Models: 
     - AudioRecording.swift: A struct representing a single audio recording, containing metadata like its URL, creation date, and file size.
 - Views: 
-    - ListView.swift: The main screen of the app, displaying the list of recordings and the primary recording controls. 
-    - MainContentView.swift: The view that contains the list of recordings with expandable playback controls. 
-    - SettingsView.swift: The main settings screen, allowing the user to toggle multichannel mode and navigate to input settings. 
-    - InputView.swift & InputSettingView.swift: Views for displaying and configuring individual audio input channels. 
-    - RecordingButtonArea.swift: The bottom area containing the main record/stop button and the timer.
+    - Main Views:
+        - ListView.swift: The main screen of the app, displaying the list of recordings and the primary recording controls.
+        - MainContentView.swift: The view that contains the list of recordings with expandable playback controls.
+        - SettingsView.swift: The main settings screen, allowing the user to toggle multichannel mode and navigate to input settings.
+        - NoItemView.swift: A placeholder view shown when there are no recordings.
+    - Recording & Playback Views:
+        - RecordingButtonArea.swift: The bottom area containing the main record/stop button and the timer.
+        - RecordingButtonIcon.swift: The circular microphone icon whose appearance changes based on the recording state.
+        - TimerView.swift: A view that displays an updating timer with hundredths-of-a-second precision during recording.
+        - ListRowView.swift: The view for a single row in the recordings list.
+    - Settings & Input Control Views:
+        - InputView.swift: Displays the list of available audio inputs and their channels.
+        - InputSettingView.swift: A view that contains the settings options for an individual audio channel.
+        - RecordingModeToggle.swift: A toggle switch to change between single-channel and multichannel mode.
+        - DisableInputToggle.swift: A toggle switch to mute or unmute a specific audio channel.
+        - GainSliderView.swift: A slider to adjust the input gain for a specific audio channel.
 - ViewModels: 
     - AudioRecordingViewModel.swift: The central ViewModel that connects the UI to the backend services.
 - Services: 
