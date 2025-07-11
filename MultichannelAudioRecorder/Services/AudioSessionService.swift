@@ -102,6 +102,33 @@ class AudioSessionService: ObservableObject {
             self.hasPermission = false
         }
     }
+    
+    func configureForSimpleRecording() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let session = AVAudioSession.sharedInstance()
+                
+                // Use simpler configuration for single-channel recording
+                try session.setCategory(.record, mode: .default, options: [])
+                try session.setActive(true)
+                
+                // Set to single channel
+                try session.setPreferredInputNumberOfChannels(1)
+                
+                print("DEBUG: Audio session configured for simple recording")
+                
+                DispatchQueue.main.async {
+                    self.updateUIWithCurrentState(session: session)
+                }
+                
+            } catch {
+                print("ERROR: Failed to configure audio session for simple recording: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.hasPermission = false
+                }
+            }
+        }
+    }
 
     /// Configures the app's shared `AVAudioSession` for recording.
     ///
@@ -117,6 +144,12 @@ class AudioSessionService: ObservableObject {
     /// 5. Updates its published properties on the main thread, allowing subscribers
     ///   (like a ViewModel) to receive the new hardware state.
     func configureAudioSession(isMultichannel: Bool) {
+        
+        if !isMultichannel {
+            configureForSimpleRecording()
+            return
+        }
+        
         self.wasConfiguredForMultichannel = isMultichannel
         
         print("DEBUG: Starting audio session configuration...")
@@ -128,6 +161,8 @@ class AudioSessionService: ObservableObject {
                 try session.setCategory(.playAndRecord, mode: .measurement, options: [.allowBluetooth, .defaultToSpeaker])
                 try session.setActive(true)
                 
+                Thread.sleep(forTimeInterval: 0.2)
+                
                 // Find and Set the Preferred Input
                 guard let preferredInput = self.selectBestAudioInput(from: session.availableInputs ?? []) else {
                     print("ERROR (SessionService): No suitable input device found.")
@@ -136,6 +171,8 @@ class AudioSessionService: ObservableObject {
 
                 print("DEBUG: Found preferred input: \(preferredInput.portName) (Type: \(preferredInput.portType.rawValue))")
                 try session.setPreferredInput(preferredInput)
+                
+                Thread.sleep(forTimeInterval: 0.1)
                 
                 // Configure the number of channels on the *active* input
                 var desiredChannels = 1

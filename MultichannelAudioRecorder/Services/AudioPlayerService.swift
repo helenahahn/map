@@ -42,9 +42,6 @@ class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayerDelegate {
         
         // Configures the system's AVAudioSession. Tells iOS that the app's primary function at the time of being called is to play audio.
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-            
             // Creates a new player instance only if one doesn't exist or if the URL is new.
             if audioPlayer == nil || currentlyPlayingURL != url {
                 audioPlayer = try AVAudioPlayer(contentsOf: url)

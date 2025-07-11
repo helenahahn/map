@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 
-class RecordingService {
+class RecordingService: NSObject, ObservableObject {
 
     /// The `AVAudioEngine` used for complex audio processing, specifically for multichannel recording in this case.
     private var audioEngine: AVAudioEngine!
@@ -66,6 +66,8 @@ class RecordingService {
     private func startSingleChannelRecording() {
         let session = AVAudioSession.sharedInstance()
         try? session.setActive(true)
+        
+        Thread.sleep(forTimeInterval: 0.1)
 
         let audioFilename = getNewRecordingURL(isMultichannel: false)
         let settings = [
@@ -75,13 +77,20 @@ class RecordingService {
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
 
-        do {
-            audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
-            audioRecorder?.record()
-            self.isRecording = true
-        } catch {
-            print("Could not start single-channel recording: \(error.localizedDescription)")
+        
+        audioRecorder = try? AVAudioRecorder(url: audioFilename, settings: settings)
+        
+        guard audioRecorder?.prepareToRecord() == true else {
+            print("Failed to prepare audio recorder")
+            return
         }
+        
+        audioRecorder?.record()
+        
+        DispatchQueue.main.async {
+            self.isRecording = true
+        }
+
     }
 
     
