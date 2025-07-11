@@ -21,10 +21,21 @@ The application is structured around a central AudioRecordingViewModel that coor
 
 ## Code Breakdown
 - MultichannelAudioRecorderApp.swift: The main entry point of the app, responsible for initializing the ViewModel and services and setting up the main WindowGroup.
-- Models: - AudioRecording.swift: A struct representing a single audio recording, containing metadata like its URL, creation date, and file size.
-- Views: - ListView.swift: The main screen of the app, displaying the list of recordings and the primary recording controls. - MainContentView.swift: The view that contains the list of recordings with expandable playback controls. - SettingsView.swift: The main settings screen, allowing the user to toggle multichannel mode and navigate to input settings. - InputView.swift & InputSettingView.swift: Views for displaying and configuring individual audio input channels. - RecordingButtonArea.swift: The bottom area containing the main record/stop button and the timer.
-- ViewModels: - AudioRecordingViewModel.swift: The central ViewModel that connects the UI to the backend services.
-- Services: - RecordingService.swift: Contains the core logic for starting, stopping, and processing audio for both single and multichannel recordings. - AudioSessionService.swift: Manages hardware interaction, permissions, and session configuration. - AudioFileService.swift: Handles saving, fetching, and deleting audio files. - AudioPlayerService.swift: Manages playback of recorded audio.
+- Models: 
+    - AudioRecording.swift: A struct representing a single audio recording, containing metadata like its URL, creation date, and file size.
+- Views: 
+    - ListView.swift: The main screen of the app, displaying the list of recordings and the primary recording controls. 
+    - MainContentView.swift: The view that contains the list of recordings with expandable playback controls. 
+    - SettingsView.swift: The main settings screen, allowing the user to toggle multichannel mode and navigate to input settings. 
+    - InputView.swift & InputSettingView.swift: Views for displaying and configuring individual audio input channels. 
+    - RecordingButtonArea.swift: The bottom area containing the main record/stop button and the timer.
+- ViewModels: 
+    - AudioRecordingViewModel.swift: The central ViewModel that connects the UI to the backend services.
+- Services: 
+    - RecordingService.swift: Contains the core logic for starting, stopping, and processing audio for both single and multichannel recordings. 
+    - AudioSessionService.swift: Manages hardware interaction, permissions, and session configuration. 
+    - AudioFileService.swift: Handles saving, fetching, and deleting audio files. 
+    - AudioPlayerService.swift: Manages playback of recorded audio.
 
 ## How to Run
 
