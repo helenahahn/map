@@ -1,4 +1,4 @@
-**Multichannel Audio Recorder**
+# **Multichannel Audio Recorder**
 This iOS application is an audio recorder built with SwiftUI. It supports both standard single-channel recording and advanced multi-channel recording from external audio interfaces.
 
 Features
