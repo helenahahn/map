@@ -56,8 +56,9 @@ extension AudioRecordingViewModel {
         
         viewModel.channelNames = ["Input 1", "Input 2", "Input 3", "Input 4"]
         viewModel.enabledChannels = [true, false, true, false]
+        viewModel.channelGainLevels = [1.0, 1.0, 1.0, 1.0]
         viewModel.isMultichannelMode = true
-        viewModel.availableInputNames = ["Test Channel"]
+        viewModel.availableInputNames = ["Test Channel 1", "Test Channel 1", "Test Channel 1", "Test Channel 1"]
         
         return viewModel // Returns the pre-configured ViewModel instance
     }

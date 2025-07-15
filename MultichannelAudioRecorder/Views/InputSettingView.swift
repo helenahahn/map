@@ -22,7 +22,7 @@ struct InputSettingView: View {
                 DisableInputToggle(viewModel: viewModel, channelIndex: channelIndex)
             }
             
-            Section(header: Text("Adjust Gain")) {
+            Section(header: Text("Adjust Gain"), footer: Text("A gain increase to 2.00 will result in about 6dB boost in signal strength. To fully mute the microphone, use the dedicated mute toggle.")) {
                 GainSliderView(viewModel: viewModel, channelIndex: channelIndex)
             }
         }
@@ -32,6 +32,6 @@ struct InputSettingView: View {
 
 #Preview {
     return NavigationStack {
-        InputSettingView(viewModel: AudioRecordingViewModel.configuredMockViewModel(), channelIndex: 0)
+        InputSettingView(viewModel: AudioRecordingViewModel.configuredMockViewModel(), channelIndex: 1)
     }
 }

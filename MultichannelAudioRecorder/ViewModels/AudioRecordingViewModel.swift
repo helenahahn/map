@@ -192,9 +192,14 @@ class AudioRecordingViewModel: ObservableObject {
         // When the channel count CHANGES, update the enabled toggles
         audioSessionService.$availableChannels
             .sink { [weak self] channelCount in
-                if self?.enabledChannels.count != channelCount {
-                    self?.enabledChannels = Array(repeating: true, count: channelCount)
-                    self?.channelGainLevels = Array(repeating: 1.0, count: channelCount)
+                
+                guard let self = self else { return }
+                
+                if !self.isPreview {
+                    if self.enabledChannels.count != channelCount {
+                        self.enabledChannels = Array(repeating: true, count: channelCount)
+                        self.channelGainLevels = Array(repeating: 1.0, count: channelCount)
+                    }
                 }
             }
             .store(in: &cancellables)

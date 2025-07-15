@@ -37,9 +37,25 @@ struct GainSliderView: View {
         )
     }
     
-    var body: some View {
-        Slider(value: gainBinding, in: 0...2.0)
+    private var formattedGainValue: String {
+        String(format: "%.2f", viewModel.channelGainLevels[channelIndex])
     }
+
+    var body: some View {
+        VStack {
+            Slider(
+                value: gainBinding,
+                in: 0...2.0,
+                minimumValueLabel: Text("0.00").font(.footnote),
+                maximumValueLabel: Text("2.00").font(.footnote)
+            ) {
+                Text("Gain")
+            }
+            Text("\(formattedGainValue)")
+                .font(.footnote)
+        }
+    }
+
 }
 
 #Preview {
