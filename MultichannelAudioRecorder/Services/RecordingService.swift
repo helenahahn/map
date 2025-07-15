@@ -159,6 +159,12 @@ class RecordingService: NSObject, ObservableObject {
         audioRecorder?.stop()
         self.isRecording = false
         audioRecorder = nil
+        
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            print("Failed to deactivate audio session: \(error)")
+        }
     }
     
     /// Stops the multichannel recording session currently in progress.
@@ -175,6 +181,12 @@ class RecordingService: NSObject, ObservableObject {
         self.isRecording = false
         audioFile = nil
         audioEngine = nil
+        
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            print("Failed to deactivate audio session: \(error)")
+        }
     }
     
     /// Configures and prepares the `AVAudioEngine` for multichannel recording.

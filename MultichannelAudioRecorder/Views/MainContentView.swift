@@ -8,7 +8,7 @@ import SwiftUI
 
 /// The main content view that displays either a list of audio recordings or a message if no recordings exist.
 ///
-/// This view is responsible for the core list interface. It uses a `DisclosureGroup` for each recording
+/// This view is responsible for the core list interface. It uses a `ScrollView` for each recording
 /// to reveal a playback control button. The state of this button (play/pause) is determined by observing
 /// the shared `AudioPlayerService`.
 struct MainContentView: View {
@@ -44,7 +44,7 @@ struct MainContentView: View {
                                         audioPlayerService.play(url: recording.url)
                                     }
                                 }) {
-                                    // The button's icon changes based on whether this specific track is currently playing.
+                                    
                                     let isCurrentlyPlayingThisTrack = audioPlayerService.currentlyPlayingURL == recording.url && audioPlayerService.isPlaying
                                     
                                     Image(systemName: isCurrentlyPlayingThisTrack ? "pause.fill" : "play.fill")
@@ -54,9 +54,9 @@ struct MainContentView: View {
                             }
                             .buttonStyle(.borderless)
                             .padding(.vertical, 5)
+                            .listRowSeparator(.hidden)
                         },
                         label: {
-                            // The main, visible part of the row.
                             ListRowView(recording: recording)
                         }
                     )

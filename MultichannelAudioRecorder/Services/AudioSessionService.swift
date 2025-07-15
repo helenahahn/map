@@ -53,6 +53,10 @@ class AudioSessionService: ObservableObject {
     }
     
     @objc func handleRouteChange(notification: Notification) {
+        if AVAudioSession.sharedInstance().category == .playback {
+            return
+        }
+        
         self.configureAudioSession(isMultichannel: self.wasConfiguredForMultichannel)
     }
     
