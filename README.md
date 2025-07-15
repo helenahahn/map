@@ -6,7 +6,7 @@ This iOS application is an audio recorder built with SwiftUI. It supports both s
 - File Management: Recordings are automatically saved and displayed in a list. Users can play back recordings and delete them with a simple swipe gesture.
 - Playback Controls: An integrated audio player allows users to play, pause, and resume their recordings directly within the app.
 - Dynamic UI: The user interface is built with SwiftUI and reactively updates based on the recording state, connected hardware, and permissions.
-- Adavnced Audio Controls: - Input Selection: The app auto-selects the best available audio input, prioritizing external hardware like USB interfaces over the built-in microphone. - Channel Management: In mult-channel mode, users can view all available input channels. - Gain Adjustment: Fine-tune the input gain for each individual channel as a slider. - Mute Channels: Unneeded channels can be individually disabled from settings.
+- Advanced Audio Controls: - Input Selection: The app auto-selects the best available audio input, prioritizing external hardware like USB interfaces over the built-in microphone. - Channel Management: In mult-channel mode, users can view all available input channels. - Gain Adjustment: Fine-tune the input gain for each individual channel as a slider. - Mute Channels: Unneeded channels can be individually disabled from settings.
 - Permissions Handling: The app requests microphone permissions and guides the users to the settings if access is denied.
 - Modern Architecture: The project follows a MVVM (Model-View-ViewModel) architecture, using Combine for reactive state management.
 
